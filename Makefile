@@ -16,11 +16,10 @@ prepare: install_dependencies.sh
 	chmod +x ./install_dependencies.sh
 	./install_dependencies.sh
 
+# Build ebpf_exporter and ebpf c files(for kernel monitoring).
 build:
-	cd ./dependencies/ebpf_exporter
-	make build
-	make -C examples clean build
-	cd ../..
+	make -C ./dependencies/ebpf_exporter clean build
+	make -C ./dependencies/ebpf_exporter/examples clean build
 #   TODO: write more ebpf c files to catch different data from linux kernel.
 
 server:

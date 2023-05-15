@@ -91,7 +91,7 @@ sudo apt install -y grafana-enterprise
 explain how to install this tool.
 
 ```bash
-git clone xxx
+git clone https://github.com/zhsh9/LinMonitor.git
 cd LinMonitor
 # use Makefile to install dependencies.
 make prepare
