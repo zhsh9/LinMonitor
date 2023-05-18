@@ -51,7 +51,7 @@ sudo apt install -y clang llvm
 
 **Note1:** there's a dependency between `libbpf` version you have installed and `libbpfgo`, which is Go's library to talk to libbpf. Currently we target `libbpf v1.2`, which has a stable interface.
 
-**Note2:** when using `apt` to install libbpf on your OS like Debian and Ubuntu, there might exist a mismatch between libbpf version and libbpfgo version. You can check the version info by using command `dpkg -l | grep libbpf`, because the `apt` installation resource is not that new enough. In this case, it is advised to build and install `libbpf` from source code.
+**Note2:** when using `apt` to install libbpf on your OS like Debian and Ubuntu, there might exist a mismatch between libbpf version and libbpfgo version. You can check the version info by using command `dpkg -l | grep libbpf`, because the software repository of `apt` on Debian and Ubuntu (2018LTS, 2020LTS, 2022LTS and so on) is not that new enough. In this case, it is advised to build and install `libbpf` from source code.
 
 We compile ebpf_exporter with libbpf `statically` compiled in, so there's only ever a chance of build time issues, never at run time.
 
