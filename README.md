@@ -25,12 +25,17 @@ The Monitor tool depends on `libbpf` to load eBPF code into the kernel, and you 
 - Installation: https://github.com/iovisor/bcc/blob/master/INSTALL.md#ubuntu---binary
 
 Installing instructions(Ubuntu-based, by `apt`):
+
 ```bash
 sudo apt update
 sudo apt install bpfcc-tools linux-headers-$(uname -r) -y
 ```
 
 ## libbpf
+
+- Github repo: https://github.com/libbpf/libbpf
+
+The following commands are used to install `libbpf` by `apt` on Debian or Ubuntu.
 
 ```bash
 sudo apt update
@@ -42,6 +47,27 @@ sudo apt install -y clang llvm
 
 - Github repo: https://github.com/cloudflare/ebpf_exporter
 
+`ebpf_exporter` depends on `libbpf` to load eBPF code into the kernel, and you need to have it installed on your system. Alternatively, you can use the bundled `Dockerfile` to have libbpf compiled in there.
+
+**Note1:** there's a dependency between `libbpf` version you have installed and `libbpfgo`, which is Go's library to talk to libbpf. Currently we target `libbpf v1.2`, which has a stable interface.
+
+**Note2:** when using `apt` to install libbpf on your OS like Debian and Ubuntu, there might exist a mismatch between libbpf version and libbpfgo version. You can check the version info by using command `dpkg -l | grep libbpf`, because the `apt` installation resource is not that new enough. In this case, it is advised to build and install `libbpf` from source code.
+
+We compile ebpf_exporter with libbpf `statically` compiled in, so there's only ever a chance of build time issues, never at run time.
+
+There are two ways to build the binary file of ebpf_exporter (if you encounter really hard problems of building on the host, building in Docker is a good alternative):
+
+```bash
+# Build on host.
+make clean build
+make -C examples clean build
+
+# Build on Docker.
+docker build -t ebpf_exporter .
+docker cp $(docker create ebpf_exporter):/ebpf_exporter ./
+make -C examples clean build
+```
+
 ## Prometheus
 
 Prometheus is a free software application used for event monitoring and alerting. It records metrics in a time series database built using an HTTP pull model, with flexible queries and real-time alerting. The basic structure of Prometheus is shown as below.
@@ -52,6 +78,7 @@ Prometheus is a free software application used for event monitoring and alerting
 - Document: https://prometheus.io/docs/introduction/overview/
 
 Installing instructions(Ubuntu-based):
+
 ```bash
 curl -OL https://github.com/prometheus/prometheus/releases/download/v2.37.8/prometheus-2.37.8.linux-amd64.tar.gz
 tar -zxvf prometheus-2.37.8.linux-amd64.tar.gz
@@ -65,6 +92,7 @@ tar -zxvf prometheus-2.37.8.linux-amd64.tar.gz
 Grafana Enterprise vs OSS: Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the full Enterprise feature set, which has support for Enterprise plugins.
 
 Installing instructions(Ubuntu-based, by `apt`):
+
 ```bash
 # To install required packages and download the Grafana repository signing key, run the following commands:
 sudo apt install -y apt-transport-https
@@ -116,4 +144,5 @@ make clean  # kill processes of servers.
 Enter `http://localhost:3000` in a browser to configure Grafana panels.
 
 # Grafana Snapshot
+
 ![example1](./images/2.png)

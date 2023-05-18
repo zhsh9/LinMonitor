@@ -1,6 +1,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/macos,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,visualstudiocode
 
+# Ignore built binary files inside dependencies/*
+dependencies/ebpf_exporter/ebpf_exporter
+dependencies/ebpf_exporter/vendor
+
 ### macOS ###
 # General
 .DS_Store
