@@ -22,6 +22,13 @@ build:
 	make -C ./dependencies/ebpf_exporter/examples clean build
 ##TODO write more ebpf c files to catch different data from linux kernel.
 
+docker_build:
+	cd ./dependencies/ebpf_exporter/
+	docker build -t ebpf_exporter .
+	docker cp $(docker create ebpf_exporter):/ebpf_exporter ./
+	cd ../..
+	make -C ./dependencies/ebpf_exporter/examples clean build
+
 server:
 	sudo ebpf --config.dir=$(examples) --config.names=$(example)
 	prometheus --config.file=./prometheus.yaml
