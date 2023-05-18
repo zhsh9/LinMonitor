@@ -20,10 +20,10 @@ prepare: install_dependencies.sh
 build:
 	make -C ./dependencies/ebpf_exporter clean build
 	make -C ./dependencies/ebpf_exporter/examples clean build
-#   TODO: write more ebpf c files to catch different data from linux kernel.
+##TODO write more ebpf c files to catch different data from linux kernel.
 
 server:
-	sudo ebpf --config.dir $(examples) --config.names $(example)
+	sudo ebpf --config.dir=$(examples) --config.names=$(example)
 	prometheus --config.file=./prometheus.yaml
 	sudo grafana server
 

@@ -1,7 +1,7 @@
 FROM golang:1.20-bullseye as builder
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libelf-dev
+RUN apt update &&\
+    apt install -y --no-install-recommends libelf-dev
 
 RUN mkdir /build && \
     git clone --branch v1.2.0 --depth 1 https://github.com/libbpf/libbpf.git /build/libbpf && \

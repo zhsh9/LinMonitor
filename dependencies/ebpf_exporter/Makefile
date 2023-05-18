@@ -30,4 +30,5 @@ build:
 	go build -o $(BIN_NAME) -v $(GO_LDFLAGS) ./cmd/ebpf_exporter
 
 clean:
-	if [ -e ./$(BIN_NAME) ]; then rm ./$(BIN_NAME); fi
+	# if [ -e ./$(BIN_NAME) ]; then rm ./$(BIN_NAME); fi
+	rm -f ./$(BIN_NAME)
