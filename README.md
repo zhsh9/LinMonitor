@@ -146,3 +146,15 @@ Enter `http://localhost:3000` in a browser to configure Grafana panels.
 # Grafana Snapshot
 
 ![example1](./images/2.png)
+
+Complementation of indices from Linux kernel:
+
+- biolatency: block io latency
+
+# Furthermore
+
+Extract more indices from Linux kernel:
+
+- time consumption of tcp connection
+- rtt(tound-trip time) of tcp
+- times of network retransmission
