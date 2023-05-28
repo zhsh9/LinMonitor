@@ -162,6 +162,9 @@ Extract more indices from Linux kernel:
 
 # eBPF Kernel Side
 
-- tcp rtt: `tcp-rtt.bpf.c` and `tcp-rtt.yaml`
-- time consumption of tcp connection: `tcp-connection-consumption.bpf.c` and `tcp-connection-consumption.bpf.yaml`
-- time of network retransmission: `network-retransmission-time.bpf.c` and `network-retransmission-time.bpf.yaml`
+- tcp rtt:
+  - `tcp-rtt.bpf.c` and `tcp-rtt.yaml`
+- time consumption of tcp connection:
+  - `tcp-connection-consumption.bpf.c` and `tcp-connection-consumption.bpf.yaml`
+- time of network retransmission:
+  - `network-retransmission-time.bpf.c` and `network-retransmission-time.bpf.yaml`
