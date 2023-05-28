@@ -162,7 +162,7 @@ Extract more indices from Linux kernel:
 
 # eBPF Kernel Side
 
-- tcp rtt:
+- tcp rtt(round-trip time):
   - `tcp-rtt.bpf.c` and `tcp-rtt.yaml`
 - time consumption of tcp connection:
   - `tcp-connection-consumption.bpf.c` and `tcp-connection-consumption.bpf.yaml`
