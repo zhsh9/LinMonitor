@@ -174,5 +174,7 @@ Extract more indices from Linux kernel:
 ## Block IO Latency
 
 - 使用eBPF技术实现了块IO（Block IO）延迟的计数。当块IO请求被插入时，eBPF程序会在`block_rq_insert`和`block_rq_issue`内核函数入口处被调用，获取所传递的request结构体，并存储当前时间戳。当块IO请求完成时，程序会在`block_rq_complete`内核函数入口处被调用，获取所传递的request结构体，并计算出块IO请求的延迟。然后，它将延迟除以2的幂，计算出延迟的bucket，分别将bucket计数加入名为`bio_latency_seconds`的哈希表中。此外，代码中还包括了一个metrics的YAML配置，定义了一个名为bio_latency_seconds的指数直方图(Histogram)。
+- `bits.bpf.h`中包含了一些通用宏定义和函数声明，如log2和log2l等。
+- `maps.bpf.h`中包含了一个用于原子性地将一个哈希表中给定key的值增加increment的函数increment_map。
 - `biolatency.bpf.c`中定义了三个eBPF程序，分别对应于块IO请求插入、块IO请求发出和块IO请求完成三个事件。这些程序在处理事件时，会将块IO请求的延迟信息存储到名为bio_latency_seconds的哈希表中。
 - `biolatency.yaml`中定义了一个名为bio_latency_seconds的指数直方图(Histogram)，用于对块IO请求的延迟信息进行统计。其中，延迟信息被分为了27个bucket，每个bucket的大小是前一个bucket大小的两倍。每个bucket的值表示对应延迟范围内的块IO请求数量。另外，每个bucket还会记录设备号、操作类型和延迟大小等相关信息。
