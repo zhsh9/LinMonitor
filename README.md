@@ -19,7 +19,7 @@
   - [TCP Window Clamps](#tcp-window-clamps)
   - [TCP RTT](#tcp-rtt)
   - [Consumption of TCP Connection](#consumption-of-tcp-connection)
-- [Time of Network Retransmission](#time-of-network-retransmission)
+  - [Time of Network Retransmission](#time-of-network-retransmission)
 
 # Features
 
@@ -243,7 +243,7 @@ TODO:
 - The other two tracepoints, `tcp_v4_conn_established` and `tcp_v6_conn_established`, calculate the connection time and increment the tcp_connect_time map. The tcp_connect_time map is a hash map that utilizes buckets to store connection times. 
 - The program further defines a histogram metric for tcp_connect_time, which can be utilized to visualize the distribution of connection times.
 
-# Time of Network Retransmission
+## Time of Network Retransmission
 
 - This is a eBPF technology to count the time of network retransmission.
 - The eBPF program is called at the entry of the kernel functions `tcp_retransmit_skb` and `tcp_cleanup_rbuf`, obtains the passed sock structure, and records the current timestamp. Then, at the entry of the `tcp_cleanup_rbuf` function, the probe is performed again, the start timestamp is obtained through the sock structure, the network retransmission time is calculated, and it is stored in a hash table named `network_retransmission`.
