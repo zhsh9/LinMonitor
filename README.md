@@ -143,15 +143,17 @@ make clean  # kill processes of servers.
 
 Enter `http://localhost:3000` in a browser to configure Grafana panels.
 
-# Grafana Snapshot
+# Showcase
+
+Grafana Snapshot: 
 
 ![example1](./images/2.png)
 
-Complementation of indices from Linux kernel:
+Current complementation of indices from Linux kernel:
 
-- [x] bio_latency_seconds: TCP SYN backlog size
-- [x] tcp_syn_backlog: TCP SYN backlog size
-- [x] tcp_window_clamps_total: Number of times that TCP window was clamped to a low value
+- [x] `bio_latency_seconds`: TCP SYN backlog size
+- [x] `tcp_syn_backlog`: TCP SYN backlog size
+- [x] `tcp_window_clamps_total`: Number of times that TCP window was clamped to a low value
 
 # Furthermore
 
@@ -160,9 +162,10 @@ Extract more indices from Linux kernel:
 
 TODO:
 
-- [ ] time consumption of tcp connection
+- [X] time consumption of tcp connection
+  - `tcp_connect_time`: Time Consumption of TCP Connection
 - [x] rtt(tound-trip time) of tcp
-  - tcp_rtt: TCP round trip time
+  - `tcp_rtt`: TCP round trip time
 - [ ] times of network retransmission
 
 # eBPF Kernel Side
@@ -176,13 +179,23 @@ TODO:
 
 # Kernel Code Explanation
 
+- `bits.bpf.h`
+  - This defines two inline functions, log2 and log2l, both of which compute the base-2 logarithm of their input values. In both functions, the logarithm is computed using a bit-twiddling algorithm that counts the number of leading zero bits in the input value and subtracts the count from the bit width of the input value minus one.
+  - The log2 function takes an unsigned 32-bit integer input and returns the integer log2 value as an unsigned 64-bit integer.
+  - The log2l function takes an unsigned 64-bit integer input and returns the integer log2 value as an unsigned 64-bit integer.
+- `maps.bpf.h`
+  - This defines a function called increment_map, which takes as input a BPF map, a key, and an increment value. The function looks up the value associated with the key in the map. If no value is found, it adds a new key-value pair with an initial value of zero. The function then atomically increments the value associated with the key by the given increment value and returns the new value.
+- `regs-ip.bpf.h`
+  - defines a macro KPROBE_REGS_IP_FIX, which performs different operations based on the architecture. For x86 architecture, the macro subtracts sizeof(kprobe_opcode_t) from IP. For other architectures, the macro does nothing.
+  - This is used for kprobes and is used to handle the IP address during function call in order to obtain the function address in a BPF program. For the x86 architecture, entry is the function IP + sizeof(kprobe_opcode_t), so in the context of a BPF program, it is necessary to subtract sizeof(kprobe_opcode_t) in order to obtain the function address.
+
 ## Block IO Latency
 
 - 使用eBPF技术实现了块IO（Block IO）延迟的计数。当块IO请求被插入时，eBPF程序会在`block_rq_insert`和`block_rq_issue`内核函数入口处被调用，获取所传递的request结构体，并存储当前时间戳。当块IO请求完成时，程序会在`block_rq_complete`内核函数入口处被调用，获取所传递的request结构体，并计算出块IO请求的延迟。然后，它将延迟除以2的幂，计算出延迟的bucket，分别将bucket计数加入名为`bio_latency_seconds`的哈希表中。此外，代码中还包括了一个metrics的YAML配置，定义了一个名为bio_latency_seconds的指数直方图(Histogram)。
-- `bits.bpf.h`中包含了一些通用宏定义和函数声明，如log2和log2l等。
-- `maps.bpf.h`中包含了一个用于原子性地将一个哈希表中给定key的值增加increment的函数increment_map。
 - `biolatency.bpf.c`中定义了三个eBPF程序，分别对应于块IO请求插入、块IO请求发出和块IO请求完成三个事件。这些程序在处理事件时，会将块IO请求的延迟信息存储到名为bio_latency_seconds的哈希表中。
 - `biolatency.yaml`中定义了一个名为bio_latency_seconds的指数直方图(Histogram)，用于对块IO请求的延迟信息进行统计。其中，延迟信息被分为了27个bucket，每个bucket的大小是前一个bucket大小的两倍。每个bucket的值表示对应延迟范围内的块IO请求数量。另外，每个bucket还会记录设备号、操作类型和延迟大小等相关信息。
+
+This code is a BPF program designed to trace block I/O operations on Linux. It hooks into three raw tracepoints to capture the start, issue, and completion of block I/O requests. When a request is started or issued, the program records the timestamp. When a request is completed, it calculates the latency by subtracting the start time from the completion time. It then updates a histogram map with the latency value and request metadata, including device, operation, and latency bucket. The histogram is defined in YAML format at the end of the code. The program uses BPF maps to store data and perform lookups. Additionally, it includes macros and helper functions to access and manipulate data structures in a CO-RE compatible way.
 
 ## TCP SYN Backlog
 
