@@ -201,3 +201,10 @@ TODO:
 - 使用eBPF技术实现了获取TCP RTT(Round-trip Time)的值。
 - 在`tcp_v4_conn_request`和`tcp_v6_conn_request`内核函数入口处进行探针，记录当前时间戳，并将sock结构体作为key，时间戳作为value，存储到名为tcp_start的哈希表中。在tcp_v4_conn_established和tcp_v6_conn_established内核函数入口处再次进行探针，通过sock结构体获取起始时间戳，并计算出rtt值，将其存储到名为tcp_rtt的哈希表中。
 - 代码中包括了一个metrics的YAML配置，定义了一个名为tcp_rtt的线性直方图(Histogram)。
+
+## Consumption of TCP Connection
+
+-  The code is a BPF program that tracks TCP connection events and logs the duration it takes to set up a connection.
+- It does so by utilizing various maps, such as a hash map for tcp_connect_time and tcp_connect_start. The program is equipped with four tracepoints that are established using kprobes. Two of these tracepoints are intended for `tcp_v4_conn_request` and `tcp_v6_conn_request`, both of which record the starting time of the connection by updating the tcp_connect_start map.
+- The other two tracepoints, `tcp_v4_conn_established` and `tcp_v6_conn_established`, calculate the connection time and increment the tcp_connect_time map. The tcp_connect_time map is a hash map that utilizes buckets to store connection times. 
+- The program further defines a histogram metric for tcp_connect_time, which can be utilized to visualize the distribution of connection times.
