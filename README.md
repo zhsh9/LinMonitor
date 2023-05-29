@@ -191,33 +191,31 @@ TODO:
 
 ## Block IO Latency
 
-- 使用eBPF技术实现了块IO（Block IO）延迟的计数。当块IO请求被插入时，eBPF程序会在`block_rq_insert`和`block_rq_issue`内核函数入口处被调用，获取所传递的request结构体，并存储当前时间戳。当块IO请求完成时，程序会在`block_rq_complete`内核函数入口处被调用，获取所传递的request结构体，并计算出块IO请求的延迟。然后，它将延迟除以2的幂，计算出延迟的bucket，分别将bucket计数加入名为`bio_latency_seconds`的哈希表中。此外，代码中还包括了一个metrics的YAML配置，定义了一个名为bio_latency_seconds的指数直方图(Histogram)。
-- `biolatency.bpf.c`中定义了三个eBPF程序，分别对应于块IO请求插入、块IO请求发出和块IO请求完成三个事件。这些程序在处理事件时，会将块IO请求的延迟信息存储到名为bio_latency_seconds的哈希表中。
-- `biolatency.yaml`中定义了一个名为bio_latency_seconds的指数直方图(Histogram)，用于对块IO请求的延迟信息进行统计。其中，延迟信息被分为了27个bucket，每个bucket的大小是前一个bucket大小的两倍。每个bucket的值表示对应延迟范围内的块IO请求数量。另外，每个bucket还会记录设备号、操作类型和延迟大小等相关信息。
-
-This code is a BPF program designed to trace block I/O operations on Linux. It hooks into three raw tracepoints to capture the start, issue, and completion of block I/O requests. When a request is started or issued, the program records the timestamp. When a request is completed, it calculates the latency by subtracting the start time from the completion time. It then updates a histogram map with the latency value and request metadata, including device, operation, and latency bucket. The histogram is defined in YAML format at the end of the code. The program uses BPF maps to store data and perform lookups. Additionally, it includes macros and helper functions to access and manipulate data structures in a CO-RE compatible way.
-
+- This code is a BPF program designed to trace block I/O operations on Linux. It hooks into three raw tracepoints to capture the start, issue, and completion of block I/O requests. When a request is started or issued, the program records the timestamp. When a request is completed, it calculates the latency by subtracting the start time from the completion time. It then updates a histogram map with the latency value and request metadata, including device, operation, and latency bucket. The histogram is defined in YAML format. The program uses BPF maps to store data and perform lookups. Additionally, it includes macros and helper functions to access and manipulate data structures in a CO-RE compatible way.
+- When a block IO request is inserted, the eBPF program is called at the entry points of the `block_rq_insert` and `block_rq_issue` kernel functions to obtain the passed request structure and store the current timestamp. When the block IO request is completed, the program is called at the entry point of the `block_rq_complete` kernel function to obtain the passed request structure and calculate the delay of the block IO request. Then, it divides the delay by a power of 2 to calculate the bucket of the delay and adds the bucket count to a hash table named `bio_latency_seconds`. In addition, the code also includes a metrics YAML configuration, which defines an exponential histogram named `bio_latency_seconds`.
+- `biolatency.bpf.c`: Defines three eBPF programs corresponding to block IO request insertion, block IO request issuance, and block IO request completion events. These programs store the latency information of block IO requests in a hash table named bio_latency_seconds.
+- `biolatency.yaml`: Defines an exponential histogram named bio_latency_seconds for statistics of block IO request latency information. The latency information is divided into 27 buckets, each bucket size being twice the size of the previous one. The value of each bucket represents the number of block IO requests within the corresponding latency range. In addition, each bucket also records relevant information such as device number, operation type, and latency size.
 ## TCP SYN Backlog
 
-- 使用eBPF技术实现了获取TCP SYN backlog的大小。
-- eBPF程序会在`tcp_v4_syn_recv_sock`和`tcp_v6_syn_recv_sock`内核函数入口处被调用，获取所传递的sock结构体，并读取其sk_ack_backlog成员的值。然后，它将sk_ack_backlog除以50，计算出backlog的bucket，分别将bucket计数和backlog计数加入名为tcp_syn_backlog的哈希表中。
-- 代码中包括了一个metrics的YAML配置，定义了一个名为tcp_syn_backlog的线性直方图(Histogram)。
+- Implemented the use of eBPF technology to obtain the size of TCP SYN backlog.
+- The eBPF program is called at the entry point of the `tcp_v4_syn_recv_sock` and `tcp_v6_syn_recv_sock` kernel functions to obtain the passed sock structure and read the value of its sk_ack_backlog member. It then divides sk_ack_backlog by 50 to calculate the backlog bucket, and adds the bucket count and backlog count to a hash table named tcp_syn_backlog.
+- The code includes a metrics YAML configuration that defines a linear histogram named tcp_syn_backlog.
 
 ## TCP Window Clamps
 
-- 使用eBPF技术实现了获取TCP窗口被钳制为低值的次数。
-- 在内核函数`tcp_try_rmem_schedule`的入口处和出口处被调用。在入口处，它会将当前socket结构体指针插入一个名为tcp_rmem_schedule_enters的哈希表中。在出口处，它会从哈希表中查找socket结构体指针，然后调用handle_tcp_sock函数处理该socket的窗口大小。如果窗口大小小于一个预定义的最小值`MIN_CLAMP`，它将会递增名为tcp_window_clamps_total的计数器。
-- 代码中包括一个metrics的YAML配置，用于定义一个名为tcp_window_clamps_total的计数器。
+- Implemented the use of eBPF technology to obtain the number of times the TCP window is clamped to a low value.
+- It is called at the entry and exit points of the kernel function `tcp_try_rmem_schedule`. At the entry point, it inserts the current socket structure pointer into a hash table named tcp_rmem_schedule_enters. At the exit point, it looks up the socket structure pointer from the hash table and calls the handle_tcp_sock function to process the window size of the socket. If the window size is less than a predefined minimum value `MIN_CLAMP`, it increments a counter named tcp_window_clamps_total.
+- The code includes a metrics YAML configuration that defines a counter named tcp_window_clamps_total.
 
 ## TCP RTT
 
-- 使用eBPF技术实现了获取TCP RTT(Round-trip Time)的值。
-- 在`tcp_v4_conn_request`和`tcp_v6_conn_request`内核函数入口处进行探针，记录当前时间戳，并将sock结构体作为key，时间戳作为value，存储到名为tcp_start的哈希表中。在tcp_v4_conn_established和tcp_v6_conn_established内核函数入口处再次进行探针，通过sock结构体获取起始时间戳，并计算出rtt值，将其存储到名为tcp_rtt的哈希表中。
-- 代码中包括了一个metrics的YAML配置，定义了一个名为tcp_rtt的线性直方图(Histogram)。
+- Implemented the use of eBPF technology to obtain the value of TCP RTT (Round-trip Time).
+- It probes at the entry point of the kernel functions `tcp_v4_conn_request` and `tcp_v6_conn_request`, records the current timestamp, and stores the sock structure as the key and the timestamp as the value in a hash table named tcp_start. It then probes again at the entry point of the kernel functions `tcp_v4_conn_established` and `tcp_v6_conn_established`, calculates the rtt value by obtaining the starting timestamp through the sock structure, and stores it in a hash table named tcp_rtt.
+- The code includes a metrics YAML configuration that defines a linear histogram named tcp_rtt.
 
 ## Consumption of TCP Connection
 
--  The code is a BPF program that tracks TCP connection events and logs the duration it takes to set up a connection.
+-  This is a BPF program that tracks TCP connection events and logs the duration it takes to set up a connection.
 - It does so by utilizing various maps, such as a hash map for tcp_connect_time and tcp_connect_start. The program is equipped with four tracepoints that are established using kprobes. Two of these tracepoints are intended for `tcp_v4_conn_request` and `tcp_v6_conn_request`, both of which record the starting time of the connection by updating the tcp_connect_start map.
 - The other two tracepoints, `tcp_v4_conn_established` and `tcp_v6_conn_established`, calculate the connection time and increment the tcp_connect_time map. The tcp_connect_time map is a hash map that utilizes buckets to store connection times. 
 - The program further defines a histogram metric for tcp_connect_time, which can be utilized to visualize the distribution of connection times.
