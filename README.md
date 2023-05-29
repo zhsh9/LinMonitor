@@ -149,18 +149,19 @@ Enter `http://localhost:3000` in a browser to configure Grafana panels.
 
 Complementation of indices from Linux kernel:
 
-- bio_latency_seconds: TCP SYN backlog size
-- tcp_syn_backlog: TCP SYN backlog size
-- tcp_window_clamps_total: Number of times that TCP window was clamped to a low value
+- [x] bio_latency_seconds: TCP SYN backlog size
+- [x] tcp_syn_backlog: TCP SYN backlog size
+- [x] tcp_window_clamps_total: Number of times that TCP window was clamped to a low value
 
 # Furthermore
 
 Extract more indices from Linux kernel:  
 (thourgh more file inside `./dependencies/ebpf_exporter/examples/xxx.bpf.c and xxx.yaml`)
 
-- time consumption of tcp connection
-- rtt(tound-trip time) of tcp
-- times of network retransmission
+- [ ] time consumption of tcp connection
+- [x] rtt(tound-trip time) of tcp
+  - tcp_rtt: TCP round trip time
+- [ ] times of network retransmission
 
 # eBPF Kernel Side
 
@@ -190,5 +191,11 @@ Extract more indices from Linux kernel:
 ## TCP Window Clamps
 
 - 使用eBPF技术实现了获取TCP窗口被钳制为低值的次数。
-- 它会在内核函数`tcp_try_rmem_schedule`的入口处和出口处被调用。在入口处，它会将当前socket结构体指针插入一个名为tcp_rmem_schedule_enters的哈希表中。在出口处，它会从哈希表中查找socket结构体指针，然后调用handle_tcp_sock函数处理该socket的窗口大小。如果窗口大小小于一个预定义的最小值`MIN_CLAMP`，它将会递增名为tcp_window_clamps_total的计数器。
+- 在内核函数`tcp_try_rmem_schedule`的入口处和出口处被调用。在入口处，它会将当前socket结构体指针插入一个名为tcp_rmem_schedule_enters的哈希表中。在出口处，它会从哈希表中查找socket结构体指针，然后调用handle_tcp_sock函数处理该socket的窗口大小。如果窗口大小小于一个预定义的最小值`MIN_CLAMP`，它将会递增名为tcp_window_clamps_total的计数器。
 - 代码中包括一个metrics的YAML配置，用于定义一个名为tcp_window_clamps_total的计数器。
+
+## TCP RTT
+
+- 使用eBPF技术实现了获取TCP RTT(Round-trip Time)的值。
+- 在`tcp_v4_conn_request`和`tcp_v6_conn_request`内核函数入口处进行探针，记录当前时间戳，并将sock结构体作为key，时间戳作为value，存储到名为tcp_start的哈希表中。在tcp_v4_conn_established和tcp_v6_conn_established内核函数入口处再次进行探针，通过sock结构体获取起始时间戳，并计算出rtt值，将其存储到名为tcp_rtt的哈希表中。
+- 代码中包括了一个metrics的YAML配置，定义了一个名为tcp_rtt的线性直方图(Histogram)。
