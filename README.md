@@ -149,7 +149,9 @@ Enter `http://localhost:3000` in a browser to configure Grafana panels.
 
 Complementation of indices from Linux kernel:
 
-- biolatency: block io latency
+- bio_latency_seconds: TCP SYN backlog size
+- tcp_syn_backlog: TCP SYN backlog size
+- tcp_window_clamps_total: Number of times that TCP window was clamped to a low value
 
 # Furthermore
 
@@ -178,3 +180,15 @@ Extract more indices from Linux kernel:
 - `maps.bpf.h`中包含了一个用于原子性地将一个哈希表中给定key的值增加increment的函数increment_map。
 - `biolatency.bpf.c`中定义了三个eBPF程序，分别对应于块IO请求插入、块IO请求发出和块IO请求完成三个事件。这些程序在处理事件时，会将块IO请求的延迟信息存储到名为bio_latency_seconds的哈希表中。
 - `biolatency.yaml`中定义了一个名为bio_latency_seconds的指数直方图(Histogram)，用于对块IO请求的延迟信息进行统计。其中，延迟信息被分为了27个bucket，每个bucket的大小是前一个bucket大小的两倍。每个bucket的值表示对应延迟范围内的块IO请求数量。另外，每个bucket还会记录设备号、操作类型和延迟大小等相关信息。
+
+## TCP SYN Backlog
+
+- 使用eBPF技术实现了获取TCP SYN backlog的大小。
+- eBPF程序会在`tcp_v4_syn_recv_sock`和`tcp_v6_syn_recv_sock`内核函数入口处被调用，获取所传递的sock结构体，并读取其sk_ack_backlog成员的值。然后，它将sk_ack_backlog除以50，计算出backlog的bucket，分别将bucket计数和backlog计数加入名为tcp_syn_backlog的哈希表中。
+- 代码中包括了一个metrics的YAML配置，定义了一个名为tcp_syn_backlog的线性直方图(Histogram)。
+
+## TCP Window Clamps
+
+- 使用eBPF技术实现了获取TCP窗口被钳制为低值的次数。
+- 它会在内核函数`tcp_try_rmem_schedule`的入口处和出口处被调用。在入口处，它会将当前socket结构体指针插入一个名为tcp_rmem_schedule_enters的哈希表中。在出口处，它会从哈希表中查找socket结构体指针，然后调用handle_tcp_sock函数处理该socket的窗口大小。如果窗口大小小于一个预定义的最小值`MIN_CLAMP`，它将会递增名为tcp_window_clamps_total的计数器。
+- 代码中包括一个metrics的YAML配置，用于定义一个名为tcp_window_clamps_total的计数器。
