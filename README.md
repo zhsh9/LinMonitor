@@ -219,3 +219,13 @@ TODO:
 - It does so by utilizing various maps, such as a hash map for tcp_connect_time and tcp_connect_start. The program is equipped with four tracepoints that are established using kprobes. Two of these tracepoints are intended for `tcp_v4_conn_request` and `tcp_v6_conn_request`, both of which record the starting time of the connection by updating the tcp_connect_start map.
 - The other two tracepoints, `tcp_v4_conn_established` and `tcp_v6_conn_established`, calculate the connection time and increment the tcp_connect_time map. The tcp_connect_time map is a hash map that utilizes buckets to store connection times. 
 - The program further defines a histogram metric for tcp_connect_time, which can be utilized to visualize the distribution of connection times.
+
+# Time of Network Retransmission
+
+- This is a eBPF technology to count the time of network retransmission.
+- The eBPF program is called at the entry of the kernel functions `tcp_retransmit_skb` and `tcp_cleanup_rbuf`, obtains the passed sock structure, and records the current timestamp. Then, at the entry of the `tcp_cleanup_rbuf` function, the probe is performed again, the start timestamp is obtained through the sock structure, the network retransmission time is calculated, and it is stored in a hash table named `network_retransmission`.
+  - The code defines two hash maps to store data related to network retransmission. The `network_retransmission` map is used to store the retransmission time and frequency, while the `network_retransmission_start` map is used to store the start time of each transmission.
+  - The `do_count` function is used to count the retransmission time. It calculates the bucket of the current retransmission time and increments the corresponding entry in the `network_retransmission` map.
+  - The `tcp_retransmit_skb` function probe is called at the entry of the `tcp_retransmit_skb` kernel function and records the start time of the current transmission in the `network_retransmission_start` map.
+  - The `tcp_cleanup_rbuf` function probe is called at the entry of the `tcp_cleanup_rbuf` kernel function and calculates the retransmission time by subtracting the start time of the transmission from the current time. It then calculates the bucket of the current retransmission time and increments the corresponding entry in the `network_retransmission` map. The entry for the start time of the transmission is then deleted from the `network_retransmission_start` map.
+- In addition, the code includes a YAML configuration for a linear histogram named `network_retransmission`.

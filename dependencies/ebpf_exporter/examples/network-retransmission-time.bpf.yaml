@@ -1,0 +1,13 @@
+metrics:
+  histograms:
+    - name: network_retransmission
+      help: Network retransmission time
+      bucket_type: linear
+      bucket_min: 0
+      bucket_max: 500
+      bucket_multiplier: 10
+      labels:
+        - name: bucket
+          size: 8
+          decoders:
+            - name: uint
