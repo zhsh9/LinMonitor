@@ -18,8 +18,8 @@
   - [TCP SYN Backlog](#tcp-syn-backlog)
   - [TCP Window Clamps](#tcp-window-clamps)
   - [TCP RTT](#tcp-rtt)
-  - [Consumption of TCP Connection](#consumption-of-tcp-connection)
-  - [Time of Network Retransmission](#time-of-network-retransmission)
+  - [TCP Connection Time](#tcp-connection-time)
+  - [Network Retransmission Time](#network-retransmission-time)
 
 # Features
 
@@ -236,14 +236,14 @@ TODO:
 - It probes at the entry point of the kernel functions `tcp_v4_conn_request` and `tcp_v6_conn_request`, records the current timestamp, and stores the sock structure as the key and the timestamp as the value in a hash table named tcp_start. It then probes again at the entry point of the kernel functions `tcp_v4_conn_established` and `tcp_v6_conn_established`, calculates the rtt value by obtaining the starting timestamp through the sock structure, and stores it in a hash table named tcp_rtt.
 - The code includes a metrics YAML configuration that defines a linear histogram named `tcp_rtt`.
 
-## Consumption of TCP Connection
+## TCP Connection Time
 
 -  This is a BPF program that tracks TCP connection events and logs the duration it takes to set up a connection.
 - It does so by utilizing various maps, such as a hash map for tcp_connect_time and tcp_connect_start. The program is equipped with four tracepoints that are established using kprobes. Two of these tracepoints are intended for `tcp_v4_conn_request` and `tcp_v6_conn_request`, both of which record the starting time of the connection by updating the tcp_connect_start map.
 - The other two tracepoints, `tcp_v4_conn_established` and `tcp_v6_conn_established`, calculate the connection time and increment the tcp_connect_time map. The tcp_connect_time map is a hash map that utilizes buckets to store connection times. 
 - The program further defines a histogram metric for tcp_connect_time, which can be utilized to visualize the distribution of connection times.
 
-## Time of Network Retransmission
+## Network Retransmission Time
 
 - This is a eBPF technology to count the time of network retransmission.
 - The eBPF program is called at the entry of the kernel functions `tcp_retransmit_skb` and `tcp_cleanup_rbuf`, obtains the passed sock structure, and records the current timestamp. Then, at the entry of the `tcp_cleanup_rbuf` function, the probe is performed again, the start timestamp is obtained through the sock structure, the network retransmission time is calculated, and it is stored in a hash table named `network_retransmission`.
