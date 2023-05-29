@@ -1,3 +1,26 @@
+# Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Features](#features)
+- [Requirements](#requirements)
+  - [bcc](#bcc)
+  - [libbpf](#libbpf)
+  - [ebpf\_exporter](#ebpf_exporter)
+  - [Prometheus](#prometheus)
+  - [Grafana](#grafana)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Showcase](#showcase)
+- [Furthermore](#furthermore)
+- [eBPF Kernel Side](#ebpf-kernel-side)
+- [Kernel Code Explanation](#kernel-code-explanation)
+  - [Block IO Latency](#block-io-latency)
+  - [TCP SYN Backlog](#tcp-syn-backlog)
+  - [TCP Window Clamps](#tcp-window-clamps)
+  - [TCP RTT](#tcp-rtt)
+  - [Consumption of TCP Connection](#consumption-of-tcp-connection)
+- [Time of Network Retransmission](#time-of-network-retransmission)
+
 # Features
 
 1. Methodology: combined toolchain
@@ -166,7 +189,7 @@ TODO:
   - `tcp_connect_time`: Time Consumption of TCP Connection
 - [x] rtt(tound-trip time) of tcp
   - `tcp_rtt`: TCP round trip time
-- [ ] times of network retransmission
+- [x] times of network retransmission
 
 # eBPF Kernel Side
 
@@ -199,19 +222,19 @@ TODO:
 
 - Implemented the use of eBPF technology to obtain the size of TCP SYN backlog.
 - The eBPF program is called at the entry point of the `tcp_v4_syn_recv_sock` and `tcp_v6_syn_recv_sock` kernel functions to obtain the passed sock structure and read the value of its sk_ack_backlog member. It then divides sk_ack_backlog by 50 to calculate the backlog bucket, and adds the bucket count and backlog count to a hash table named tcp_syn_backlog.
-- The code includes a metrics YAML configuration that defines a linear histogram named tcp_syn_backlog.
+- The code includes a metrics YAML configuration that defines a linear histogram named `tcp_syn_backlog`.
 
 ## TCP Window Clamps
 
 - Implemented the use of eBPF technology to obtain the number of times the TCP window is clamped to a low value.
 - It is called at the entry and exit points of the kernel function `tcp_try_rmem_schedule`. At the entry point, it inserts the current socket structure pointer into a hash table named tcp_rmem_schedule_enters. At the exit point, it looks up the socket structure pointer from the hash table and calls the handle_tcp_sock function to process the window size of the socket. If the window size is less than a predefined minimum value `MIN_CLAMP`, it increments a counter named tcp_window_clamps_total.
-- The code includes a metrics YAML configuration that defines a counter named tcp_window_clamps_total.
+- The code includes a metrics YAML configuration that defines a counter named `tcp_window_clamps_total`.
 
 ## TCP RTT
 
 - Implemented the use of eBPF technology to obtain the value of TCP RTT (Round-trip Time).
 - It probes at the entry point of the kernel functions `tcp_v4_conn_request` and `tcp_v6_conn_request`, records the current timestamp, and stores the sock structure as the key and the timestamp as the value in a hash table named tcp_start. It then probes again at the entry point of the kernel functions `tcp_v4_conn_established` and `tcp_v6_conn_established`, calculates the rtt value by obtaining the starting timestamp through the sock structure, and stores it in a hash table named tcp_rtt.
-- The code includes a metrics YAML configuration that defines a linear histogram named tcp_rtt.
+- The code includes a metrics YAML configuration that defines a linear histogram named `tcp_rtt`.
 
 ## Consumption of TCP Connection
 
@@ -228,4 +251,4 @@ TODO:
   - The `do_count` function is used to count the retransmission time. It calculates the bucket of the current retransmission time and increments the corresponding entry in the `network_retransmission` map.
   - The `tcp_retransmit_skb` function probe is called at the entry of the `tcp_retransmit_skb` kernel function and records the start time of the current transmission in the `network_retransmission_start` map.
   - The `tcp_cleanup_rbuf` function probe is called at the entry of the `tcp_cleanup_rbuf` kernel function and calculates the retransmission time by subtracting the start time of the transmission from the current time. It then calculates the bucket of the current retransmission time and increments the corresponding entry in the `network_retransmission` map. The entry for the start time of the transmission is then deleted from the `network_retransmission_start` map.
-- In addition, the code includes a YAML configuration for a linear histogram named `network_retransmission`.
+- The code includes a YAML configuration for a linear histogram named `network_retransmission`.
