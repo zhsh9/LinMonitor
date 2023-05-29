@@ -158,6 +158,8 @@ Complementation of indices from Linux kernel:
 Extract more indices from Linux kernel:  
 (thourgh more file inside `./dependencies/ebpf_exporter/examples/xxx.bpf.c and xxx.yaml`)
 
+TODO:
+
 - [ ] time consumption of tcp connection
 - [x] rtt(tound-trip time) of tcp
   - tcp_rtt: TCP round trip time
